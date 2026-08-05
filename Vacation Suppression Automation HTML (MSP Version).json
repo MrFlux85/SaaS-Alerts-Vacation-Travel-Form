@@ -1,0 +1,823 @@
+{
+  "name": "Vacation Suppression Automation HTML (MSP Version)",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cc15c259-704e-4c81-86fb-f386759479ad",
+              "name": "region",
+              "value": "={{ $json.region }}",
+              "type": "string"
+            },
+            {
+              "id": "697821e9-8881-417d-b218-d1ee286b3264",
+              "name": "partnerId",
+              "value": "=",
+              "type": "string"
+            },
+            {
+              "id": "c9299aab-725b-4a62-b74c-95214bbf6042",
+              "name": "partnerName",
+              "value": "=",
+              "type": "string"
+            },
+            {
+              "id": "cb035da6-be8e-4cd4-b554-48754e78db73",
+              "name": "api_key",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -448,
+        -48
+      ],
+      "id": "66f0cf7c-a7f6-4f96-b1ec-ce4bdc11ec31",
+      "name": "Partner Variables"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Webhook').first().json.body;\nconst userName       = body['First and Last Name']        || '';\nconst userEmail      = body['Work Email']                 || '';\nconst stop1          = body['First Stop (optional)']      || '';\nconst stop2          = body['Second Stop (optional)']     || '';\nconst stop3          = body['Third Stop (optional)']      || '';\nconst finalDest      = body['Final Destination']          || '';\nconst departure      = body['Departure Date']             || '';\nconst returnDate     = body['Return Date']                || '';\nconst notes          = body['Additional Notes']           || '';\n\nconst today = new Date().toISOString().split('T')[0];\nconst departureDate  = new Date(departure);\nconst returnDateObj  = new Date(returnDate);\nconst todayDate      = new Date(today);\n\nif (departureDate < todayDate) {\n  return [{ json: { error: 'past_date', message: 'Departure date cannot be in the past.' } }];\n}\nif (returnDateObj < departureDate) {\n  return [{ json: { error: 'bad_dates', message: 'Return date cannot be before your departure date.' } }];\n}\n\nconst countryCodeMap = {\n  'Afghanistan': 'AF', 'Albania': 'AL', 'Algeria': 'DZ', 'Andorra': 'AD', 'Angola': 'AO',\n  'Antigua and Barbuda': 'AG', 'Argentina': 'AR', 'Armenia': 'AM', 'Australia': 'AU', 'Austria': 'AT',\n  'Azerbaijan': 'AZ', 'Bahamas': 'BS', 'Bahrain': 'BH', 'Bangladesh': 'BD', 'Barbados': 'BB',\n  'Belarus': 'BY', 'Belgium': 'BE', 'Belize': 'BZ', 'Benin': 'BJ', 'Bhutan': 'BT',\n  'Bolivia': 'BO', 'Bosnia and Herzegovina': 'BA', 'Botswana': 'BW', 'Brazil': 'BR', 'Brunei': 'BN',\n  'Bulgaria': 'BG', 'Burkina Faso': 'BF', 'Burundi': 'BI', 'Cabo Verde': 'CV', 'Cambodia': 'KH',\n  'Cameroon': 'CM', 'Canada': 'CA', 'Central African Republic': 'CF', 'Chad': 'TD', 'Chile': 'CL',\n  'China': 'CN', 'Colombia': 'CO', 'Comoros': 'KM', 'Congo (Brazzaville)': 'CG', 'Congo (Kinshasa)': 'CD',\n  'Costa Rica': 'CR', 'Croatia': 'HR', 'Cuba': 'CU', 'Cyprus': 'CY', 'Czech Republic': 'CZ',\n  'Denmark': 'DK', 'Djibouti': 'DJ', 'Dominica': 'DM', 'Dominican Republic': 'DO', 'Ecuador': 'EC',\n  'Egypt': 'EG', 'El Salvador': 'SV', 'Equatorial Guinea': 'GQ', 'Eritrea': 'ER', 'Estonia': 'EE',\n  'Eswatini': 'SZ', 'Ethiopia': 'ET', 'Fiji': 'FJ', 'Finland': 'FI', 'France': 'FR',\n  'Gabon': 'GA', 'Gambia': 'GM', 'Georgia': 'GE', 'Germany': 'DE', 'Ghana': 'GH',\n  'Greece': 'GR', 'Grenada': 'GD', 'Guatemala': 'GT', 'Guinea': 'GN', 'Guinea-Bissau': 'GW',\n  'Guyana': 'GY', 'Haiti': 'HT', 'Honduras': 'HN', 'Hungary': 'HU', 'Iceland': 'IS',\n  'India': 'IN', 'Indonesia': 'ID', 'Iran': 'IR', 'Iraq': 'IQ', 'Ireland': 'IE',\n  'Israel': 'IL', 'Italy': 'IT', 'Ivory Coast': 'CI', 'Jamaica': 'JM', 'Japan': 'JP',\n  'Jordan': 'JO', 'Kazakhstan': 'KZ', 'Kenya': 'KE', 'Kiribati': 'KI', 'Kuwait': 'KW',\n  'Kyrgyzstan': 'KG', 'Laos': 'LA', 'Latvia': 'LV', 'Lebanon': 'LB', 'Lesotho': 'LS',\n  'Liberia': 'LR', 'Libya': 'LY', 'Liechtenstein': 'LI', 'Lithuania': 'LT', 'Luxembourg': 'LU',\n  'Madagascar': 'MG', 'Malawi': 'MW', 'Malaysia': 'MY', 'Maldives': 'MV', 'Mali': 'ML',\n  'Malta': 'MT', 'Marshall Islands': 'MH', 'Mauritania': 'MR', 'Mauritius': 'MU', 'Mexico': 'MX',\n  'Micronesia': 'FM', 'Moldova': 'MD', 'Monaco': 'MC', 'Mongolia': 'MN', 'Montenegro': 'ME',\n  'Morocco': 'MA', 'Mozambique': 'MZ', 'Myanmar': 'MM', 'Namibia': 'NA', 'Nauru': 'NR',\n  'Nepal': 'NP', 'Netherlands': 'NL', 'New Zealand': 'NZ', 'Nicaragua': 'NI', 'Niger': 'NE',\n  'Nigeria': 'NG', 'North Korea': 'KP', 'North Macedonia': 'MK', 'Norway': 'NO', 'Oman': 'OM',\n  'Pakistan': 'PK', 'Palau': 'PW', 'Palestine': 'PS', 'Panama': 'PA', 'Papua New Guinea': 'PG',\n  'Paraguay': 'PY', 'Peru': 'PE', 'Philippines': 'PH', 'Poland': 'PL', 'Portugal': 'PT',\n  'Qatar': 'QA', 'Romania': 'RO', 'Russia': 'RU', 'Rwanda': 'RW', 'Saint Kitts and Nevis': 'KN',\n  'Saint Lucia': 'LC', 'Saint Vincent and the Grenadines': 'VC', 'Samoa': 'WS', 'San Marino': 'SM',\n  'São Tomé and Príncipe': 'ST', 'Saudi Arabia': 'SA', 'Senegal': 'SN', 'Serbia': 'RS',\n  'Seychelles': 'SC', 'Sierra Leone': 'SL', 'Singapore': 'SG', 'Slovakia': 'SK', 'Slovenia': 'SI',\n  'Solomon Islands': 'SB', 'Somalia': 'SO', 'South Africa': 'ZA', 'South Korea': 'KR',\n  'South Sudan': 'SS', 'Spain': 'ES', 'Sri Lanka': 'LK', 'Sudan': 'SD', 'Suriname': 'SR',\n  'Sweden': 'SE', 'Switzerland': 'CH', 'Syria': 'SY', 'Taiwan': 'TW', 'Tajikistan': 'TJ',\n  'Tanzania': 'TZ', 'Thailand': 'TH', 'Timor-Leste': 'TL', 'Togo': 'TG', 'Tonga': 'TO',\n  'Trinidad and Tobago': 'TT', 'Tunisia': 'TN', 'Turkey': 'TR', 'Turkmenistan': 'TM',\n  'Tuvalu': 'TV', 'Uganda': 'UG', 'Ukraine': 'UA', 'United Arab Emirates': 'AE',\n  'United Kingdom': 'GB', 'United States': 'US', 'Uruguay': 'UY', 'Uzbekistan': 'UZ',\n  'Vanuatu': 'VU', 'Vatican City': 'VA', 'Venezuela': 'VE', 'Vietnam': 'VN',\n  'Yemen': 'YE', 'Zambia': 'ZM', 'Zimbabwe': 'ZW'\n};\n\n// Build ordered country list, skip empty optional stops\nconst countries = [stop1, stop2, stop3, finalDest]\n  .filter(c => c.trim() !== '');\n\nconst invalidCountries = countries.filter(c => !countryCodeMap[c]);\nif (invalidCountries.length > 0) {\n  return [{ json: { error: 'bad_country', message: `Country not recognized: \"${invalidCountries.join('\", \"')}\". Check spelling e.g. \"United States\", \"United Kingdom\".` } }];\n}\n\nconst toISO = (dateStr) => new Date(dateStr + 'T00:00:00Z').toISOString();\n\nreturn countries.map(country => ({\n  json: {\n    userName,\n    userEmail,\n    country,\n    countryCode: countryCodeMap[country],\n    departure,\n    returnDate,\n    notes,\n    startDate: toISO(departure),\n    endDate: toISO(returnDate),\n    suppressionName: `Vacation - ${userName} - ${country} (${departure} to ${returnDate})`\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        -48
+      ],
+      "id": "e6c28276-33df-410f-9c48-4a7dc7e24d35",
+      "name": "Map & Validate Form Data",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://us-central1-the-byway-248217.cloudfunctions.net/manageApi/api/v1/suppressions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_key",
+              "value": "={{ $('Partner Variables').item.json.api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"customerIds\": [\"{{ $json.orgId }}\"],\n  \"users\": [\"{{ $json.userEmail }}\"],\n  \"scope\": \"users\",\n  \"productType\": \"MS\",\n  \"rules\": {\n    \"processInIOC\": false,\n    \"processInRespond\": false,\n    \"processOAL\": false,\n    \"createPSATicket\": false,\n    \"showInAnalysis\": false\n  },\n  \"reason\": \"Vacation travel to {{ $json.country }}{{ $json.notes ? ' — ' + $json.notes : '' }}\",\n  \"filters\": [\n    {\n      \"field\": \"jointType\",\n      \"operator\": \"equals\",\n      \"value\": \"outside.own.location\"\n    },\n    {\n      \"field\": \"location.country\",\n      \"operator\": \"equals\",\n      \"value\": \"{{ $json.countryCode }}\"\n    }\n  ],\n  \"startDate\": \"{{ $json.startDate }}\",\n  \"endDate\": \"{{ $json.endDate }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        688
+      ],
+      "id": "993844f6-a891-4881-8494-dfdf345c983c",
+      "name": "POST Create Suppression",
+      "executeOnce": false,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "toEmail": "={{ $json.userEmail }}",
+        "subject": "=Vacation Suppression Confirmed — {{ $json.userName }}",
+        "emailFormat": "text",
+        "text": "={{ $json.emailBody }}",
+        "options": {
+          "bccEmail": ""
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1152,
+        592
+      ],
+      "id": "794cd82c-6cfd-4ec8-a6d8-a68992f61344",
+      "name": "Gmail SMTP",
+      "webhookId": "0c46914a-8def-49c6-80a7-750106f22fb3"
+    },
+    {
+      "parameters": {
+        "content": "Partner Variables Node Update!! \n\nUpdate with your Partner ID from within SaaS Alerts. Settings > API > Show Partner ID.\n\nUpdate PartnerName to your MSP Name as it is in SaaS Alerts\n\nUpdate your API Key - Settings > API > API Key\n",
+        "height": 224,
+        "width": 464
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        176
+      ],
+      "id": "5b126952-997f-4c76-93f7-cfe0a06b1cdd",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "https://us-central1-the-byway-248217.cloudfunctions.net/reportApi/api/v1/customers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $('Partner Variables').first().json.api_key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        -64
+      ],
+      "id": "c4453ec0-670c-4f70-9626-9d0838dd0a27",
+      "name": "GET Customer List"
+    },
+    {
+      "parameters": {
+        "content": "Gmail SMTP\n\nAdd in your own credentials for your Gmail SMTP Relay. Free and easy to use. Gmail 2FA required. Follow these steps: \n\nGenerate a Gmail App Password:\n\nGo to myaccount.google.com\nClick Security in the left nav\nUnder \"How you sign in to Google\" make sure 2-Step Verification is enabled (app passwords require this)\nSearch for \"App passwords\" in the search bar at the top of the page\nGive it a name (e.g. \"n8n SaaS Alerts\")\nClick Create — Google generates a 16-character password\nCopy it immediately — you won't see it again\n\nConfigure in n8n:\n\nClick the Gmail SMTP node\nOpen the credentials\nSet:\n\nUser: your full Gmail address\nPassword: the 16-character app password (no spaces)\nHost: smtp.gmail.com\nPort: 465 (SSL) or 587 (TLS)\nSSL/TLS: enabled\n\n\nSave and test",
+        "height": 736,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        288
+      ],
+      "id": "c0411a5e-1087-48e1-997a-31489fec3e3f",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allFormData = $('Map & Validate Form Data').all();\nconst customers = $input.all();\nconst apiKey = $('Partner Variables').first().json.api_key;\nconst userEmail = allFormData[0].json.userEmail || '';\n\nlet matchedOrgId = null;\n\nfor (const customer of customers) {\n  const customerId = customer.json.id;\n  \n  const response = await helpers.httpRequest({\n    method: 'GET',\n    url: `https://us-central1-the-byway-248217.cloudfunctions.net/reportApi/api/v1/reports/users?customerId=${customerId}`,\n    headers: { \n      'x-api-key': apiKey,\n      'accept': 'application/json'\n    }\n  });\n\n  const match = response.find(u => \n    u.email && u.email.toLowerCase().trim() === userEmail.toLowerCase().trim()\n  );\n\n  if (match) {\n    matchedOrgId = customerId;\n    break;\n  }\n}\n\nif (!matchedOrgId) {\n  throw new Error(`Email not found: \"${userEmail}\". Please contact your MSP.`);\n}\n\n// Return ONE item with countries as array — expand after POST\nreturn [{\n  json: {\n    ...allFormData[0].json,\n    orgId: matchedOrgId,\n    allCountries: allFormData.map(item => ({\n      country: item.json.country,\n      countryCode: item.json.countryCode,\n      suppressionName: item.json.suppressionName,\n      startDate: item.json.startDate,\n      endDate: item.json.endDate\n    }))\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        192
+      ],
+      "id": "d0d659ef-8370-48e2-8531-42479815cc27",
+      "name": "Find Org by Email"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ac21159f-ba2c-40cd-8dd0-567521007ff2",
+                    "leftValue": "={{ $json.error }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "empty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d1b6db8f-fce1-403c-bd0c-a74c125c5bcc",
+                    "leftValue": "={{ $json.error }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notExists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -16,
+        -64
+      ],
+      "id": "c603e3d0-a92e-4d89-b0bd-166f64ff90d0",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "path": "24c2c243-5a87-40f6-a25e-1157036fe755",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        -128
+      ],
+      "id": "d91a227e-d3ba-497a-94e6-1af465128e01",
+      "name": "Auth Entry",
+      "webhookId": "24c2c243-5a87-40f6-a25e-1157036fe755"
+    },
+    {
+      "parameters": {
+        "jsCode": "const clientId = 'Your CLIENT ID';\nconst tenantId = 'Your TENANT ID';\nconst redirectUri = 'https://[your-n8n-instance].app.n8n.cloud/webhook/auth/callback';\nconst scope = 'openid profile email User.Read';\nconst state = Math.random().toString(36).substring(2);\n\nconst authUrl = 'https://login.microsoftonline.com/' + tenantId + '/oauth2/v2.0/authorize' +\n  '?client_id=' + clientId +\n  '&response_type=code' +\n  '&redirect_uri=' + encodeURIComponent(redirectUri) +\n  '&scope=' + encodeURIComponent(scope) +\n  '&state=' + state;\n\nreturn [{ json: { authUrl } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1152,
+        -128
+      ],
+      "id": "8bee6800-21d4-443c-9688-53b03b0f0bdc",
+      "name": "Build MS Auth URL"
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "= {{ $json.authUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -960,
+        -128
+      ],
+      "id": "f0661aeb-d957-439f-a67a-e14560a0e0de",
+      "name": "Respond – redirect to MS"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://login.microsoftonline.com/4d32e778-da99-4e17-84be-d8deaff1b78a/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "authorization_code"
+            },
+            {
+              "name": "code",
+              "value": "={{ $json.query.code }}"
+            },
+            {
+              "name": "redirect_uri",
+              "value": "https://[your-n8n-instance].app.n8n.cloud/webhook/auth/callback"
+            },
+            {
+              "name": "client_id",
+              "value": "Your CLIENT ID"
+            },
+            {
+              "name": "client_secret",
+              "value": "Your CLIENT Secret"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1728,
+        112
+      ],
+      "id": "adf2fef6-599d-4705-834a-87d276864481",
+      "name": "HTTP – exchange code",
+      "retryOnFail": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://graph.microsoft.com/v1.0/me",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$select",
+              "value": "id,displayName,mail,userPrincipalName"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('HTTP – exchange code').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1536,
+        112
+      ],
+      "id": "ed2debfe-f300-4141-9d62-d63ee8d7ca3b",
+      "name": "HTTP – MS Graph profile"
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "=https://saasalerts.app.n8n.cloud/webhook/landing?token={{ $json.token }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -960,
+        112
+      ],
+      "id": "9148a504-37de-412f-acb9-dfff4a79e345",
+      "name": "Respond – redirect to form"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Grab all items from Map & Validate — one per country\nconst items = $('Map & Validate Form Data').all();\nconst first = items[0].json;\nconst userName   = first.userName;\nconst userEmail  = first.userEmail;\nconst departure  = first.departure;\nconst returnDate = first.returnDate;\nconst notes      = first.notes;\n\n// Format dates for display\nconst formatDate = (dateStr) => new Date(dateStr + 'T00:00:00Z')\n  .toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });\n\nconst departureFormatted = formatDate(departure);\nconst returnFormatted    = formatDate(returnDate);\n\n// Build country list for email\nconst countryLines = items.map((item, i) => \n  `  ${i + 1}. ${item.json.country}`\n).join('\\n');\n\nconst emailBody = `Your vacation suppression has been successfully created in SaaS Alerts.\n\nDetails:\n- Name: ${userName}\n- Email: ${userEmail}\n- Departure: ${departureFormatted}\n- Return: ${returnFormatted}${notes ? `\\n- Notes: ${notes}` : ''}\n\nCountries covered (${items.length}):\n${countryLines}\n\nAlerts for your account will be suppressed during this period and will automatically resume when the suppression expires.`;\n\nreturn [{ json: { emailBody, userEmail, userName } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        592
+      ],
+      "id": "843c263a-02e0-4f18-b772-dfde5cd9cd29",
+      "name": "Build Confirmation Email"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        768,
+        592
+      ],
+      "id": "1bafb47a-3a8d-46b3-9baf-8c1a88b571c2",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "path": "de828344-df19-4364-8305-eb45df03dba0",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1936,
+        112
+      ],
+      "id": "8eafca6f-56a8-4661-b50d-4e42e1102a1a",
+      "name": "OAuth Callback",
+      "webhookId": "de828344-df19-4364-8305-eb45df03dba0"
+    },
+    {
+      "parameters": {
+        "jsCode": "const profile = $('HTTP – MS Graph profile').first().json;\n\nif (!profile.mail && !profile.userPrincipalName) {\n  return [{ json: { valid: false, reason: 'No email found on Microsoft profile.' } }];\n}\n\nconst userEmail = profile.mail || profile.userPrincipalName;\n\nreturn [{ json: { \n  valid: true,\n  userEmail,\n  displayName: profile.displayName\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        112
+      ],
+      "id": "46ef3f96-8393-42d6-b03a-1ea1caabade1",
+      "name": "Validate User"
+    },
+    {
+      "parameters": {
+        "jsCode": "const profile = $('Validate User').first().json;\n\nif (!profile.valid) {\n  return [{ json: { token: null, error: profile.reason } }];\n}\n\nconst token = Buffer.from(JSON.stringify({\n  email: profile.userEmail,\n  name: profile.displayName,\n  expires: Date.now() + (30 * 60 * 1000)\n})).toString('base64');\n\nreturn [{ json: { token, userEmail: profile.userEmail } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1152,
+        112
+      ],
+      "id": "5235273a-3b31-4cee-92de-164c10d98d86",
+      "name": "Generate Session Token"
+    },
+    {
+      "parameters": {
+        "content": "Steps for creating the App Registration\n\nGo to portal.azure.com\nSearch for App registrations → New registration\nName it something like n8n Vacation Form\nSupported account types: Single tenant (your org only) or Multitenant depending on your MSP setup\nRedirect URI: Web → https://[your-n8n-instance].app.n8n.cloud/webhook/auth/callback\nClick Register\n\nOnce registered grab:\n\nApplication (client) ID — on the overview page\nDirectory (tenant) ID — on the overview page\nClient Secret — go to Certificates & Secrets → New client secret\n\nOnce the above is done, make the below adjustments\n\nUpdate: tenant_id in Build MS Auth URL node\nUpdate: client_id in Build MS Auth URL node and HTTP Exchange Code node\nUpdate: client_secret (Value) in HTTP Exchange Code node\nUpdate: redirect_uri in HTTP Exchange Code node to match your n8n instance URL\n\n**Redirect URIs in Azure Portal to match your n8n instance URL",
+        "height": 592,
+        "width": 784
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1616,
+        320
+      ],
+      "id": "26c5e9ab-c566-4026-9407-66570190e9e8",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -208,
+        -336
+      ],
+      "id": "239cb889-0662-4775-aa48-35e657c8b00c",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c161ccdd-faa6-490a-9281-466ad6524604",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -656,
+        -48
+      ],
+      "id": "9597affc-f8fa-48f2-b48d-75cecb2b7ff0",
+      "name": "Webhook",
+      "webhookId": "c161ccdd-faa6-490a-9281-466ad6524604"
+    },
+    {
+      "parameters": {
+        "path": "e202f864-390e-437e-879e-c4d6f4186044",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -640,
+        -336
+      ],
+      "id": "bc1e99a6-073f-4558-98d2-a5b84aa2df15",
+      "name": "Landing Page",
+      "webhookId": "e202f864-390e-437e-879e-c4d6f4186044"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true, \"message\": \"Suppression created successfully\"}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        576,
+        592
+      ],
+      "id": "5f5e865d-12b0-45ec-ae95-387f943e0d56",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": false, \"message\": \"{{ $json.message || 'There was a problem creating your suppression. Please contact your MSP for assistance.' }}\"}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        576,
+        784
+      ],
+      "id": "9e3b354c-0b01-4a7f-8fa3-3f9db03a8047",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nreturn data.allCountries.map(c => ({\n  json: {\n    userName: data.userName,\n    userEmail: data.userEmail,\n    country: c.country,\n    countryCode: c.countryCode,\n    departure: data.departure,\n    returnDate: data.returnDate,\n    startDate: c.startDate,\n    endDate: c.endDate,\n    suppressionName: c.suppressionName,\n    orgId: data.orgId,\n    notes: data.notes\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        448
+      ],
+      "id": "a1583521-edaa-429c-b8ed-4e1678a0baef",
+      "name": "Prepare Suppression Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $input.first().json.query || {};\nconst token = query.token || '';\n\nlet userData = { name: '', email: '' };\ntry {\n  if (token) {\n    userData = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));\n  }\n} catch (e) {\n  userData = { name: '', email: '' };\n}\n\nconst userName = userData.name || '';\nconst userEmail = userData.email || '';\n\nconst countries = [\"Afghanistan\",\"Albania\",\"Algeria\",\"Andorra\",\"Angola\",\"Antigua and Barbuda\",\"Argentina\",\"Armenia\",\"Australia\",\"Austria\",\"Azerbaijan\",\"Bahamas\",\"Bahrain\",\"Bangladesh\",\"Barbados\",\"Belarus\",\"Belgium\",\"Belize\",\"Benin\",\"Bhutan\",\"Bolivia\",\"Bosnia and Herzegovina\",\"Botswana\",\"Brazil\",\"Brunei\",\"Bulgaria\",\"Burkina Faso\",\"Burundi\",\"Cabo Verde\",\"Cambodia\",\"Cameroon\",\"Canada\",\"Central African Republic\",\"Chad\",\"Chile\",\"China\",\"Colombia\",\"Comoros\",\"Congo\",\"Costa Rica\",\"Croatia\",\"Cuba\",\"Cyprus\",\"Czech Republic\",\"Denmark\",\"Djibouti\",\"Dominica\",\"Dominican Republic\",\"Ecuador\",\"Egypt\",\"El Salvador\",\"Equatorial Guinea\",\"Eritrea\",\"Estonia\",\"Eswatini\",\"Ethiopia\",\"Fiji\",\"Finland\",\"France\",\"Gabon\",\"Gambia\",\"Georgia\",\"Germany\",\"Ghana\",\"Greece\",\"Grenada\",\"Guatemala\",\"Guinea\",\"Guinea-Bissau\",\"Guyana\",\"Haiti\",\"Honduras\",\"Hungary\",\"Iceland\",\"India\",\"Indonesia\",\"Iran\",\"Iraq\",\"Ireland\",\"Israel\",\"Italy\",\"Jamaica\",\"Japan\",\"Jordan\",\"Kazakhstan\",\"Kenya\",\"Kiribati\",\"Kuwait\",\"Kyrgyzstan\",\"Laos\",\"Latvia\",\"Lebanon\",\"Lesotho\",\"Liberia\",\"Libya\",\"Liechtenstein\",\"Lithuania\",\"Luxembourg\",\"Madagascar\",\"Malawi\",\"Malaysia\",\"Maldives\",\"Mali\",\"Malta\",\"Marshall Islands\",\"Mauritania\",\"Mauritius\",\"Mexico\",\"Micronesia\",\"Moldova\",\"Monaco\",\"Mongolia\",\"Montenegro\",\"Morocco\",\"Mozambique\",\"Myanmar\",\"Namibia\",\"Nauru\",\"Nepal\",\"Netherlands\",\"New Zealand\",\"Nicaragua\",\"Niger\",\"Nigeria\",\"North Korea\",\"North Macedonia\",\"Norway\",\"Oman\",\"Pakistan\",\"Palau\",\"Palestine\",\"Panama\",\"Papua New Guinea\",\"Paraguay\",\"Peru\",\"Philippines\",\"Poland\",\"Portugal\",\"Qatar\",\"Romania\",\"Russia\",\"Rwanda\",\"Saint Kitts and Nevis\",\"Saint Lucia\",\"Saint Vincent and the Grenadines\",\"Samoa\",\"San Marino\",\"Sao Tome and Principe\",\"Saudi Arabia\",\"Senegal\",\"Serbia\",\"Seychelles\",\"Sierra Leone\",\"Singapore\",\"Slovakia\",\"Slovenia\",\"Solomon Islands\",\"Somalia\",\"South Africa\",\"South Korea\",\"South Sudan\",\"Spain\",\"Sri Lanka\",\"Sudan\",\"Suriname\",\"Sweden\",\"Switzerland\",\"Syria\",\"Taiwan\",\"Tajikistan\",\"Tanzania\",\"Thailand\",\"Timor-Leste\",\"Togo\",\"Tonga\",\"Trinidad and Tobago\",\"Tunisia\",\"Turkey\",\"Turkmenistan\",\"Tuvalu\",\"Uganda\",\"Ukraine\",\"United Arab Emirates\",\"United Kingdom\",\"United States\",\"Uruguay\",\"Uzbekistan\",\"Vanuatu\",\"Vatican City\",\"Venezuela\",\"Vietnam\",\"Yemen\",\"Zambia\",\"Zimbabwe\"];\n\nfunction escapeHtml(str) {\n  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');\n}\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Vacation Travel Request</title>\n<link href=\"https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;1,400&display=swap\" rel=\"stylesheet\">\n<style>\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body{min-height:100%;background:#f1f5f9;}\nbody{font-family:'DM Sans',sans-serif;color:#1e293b;}\n.page{min-height:100vh;display:flex;flex-direction:column;}\n.hero{background:#1d6fa5;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}\n.hero-left{display:flex;align-items:center;gap:16px;}\n.hero-plane{font-size:28px;line-height:1;}\n.hero-title{font-family:'Playfair Display',serif;font-size:26px;font-style:italic;color:#ffffff;line-height:1.1;}\n.hero-sub{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-top:4px;}\n.ticker{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:8px 16px;overflow:hidden;max-width:480px;}\n.ticker-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.6);white-space:nowrap;flex-shrink:0;}\n.ticker-track{overflow:hidden;flex:1;}\n.ticker-inner{display:flex;gap:32px;white-space:nowrap;animation:ticker 30s linear infinite;}\n.ticker-item{font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0.05em;}\n.ticker-item span{color:rgba(255,255,255,0.8);margin-left:6px;}\n@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}\n.main{flex:1;display:flex;gap:32px;max-width:1400px;width:100%;margin:0 auto;padding:24px 48px;align-items:flex-start;}\n.form-col{flex:0 0 400px;}\n.form-card{background:#ffffff;border:1px solid #cbd5e1;border-radius:16px;overflow:hidden;}\n.form-card-header{background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:18px 24px;}\n.form-eyebrow{font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#1d6fa5;margin-bottom:6px;}\n.form-heading{font-family:'Playfair Display',serif;font-size:22px;color:#0f172a;}\n.form-body{padding:20px 24px;}\n.field{margin-bottom:12px;position:relative;}\n.field label{display:block;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#64748b;margin-bottom:7px;}\n.field label .req{color:#1d6fa5;}\n.field label .opt{text-transform:none;letter-spacing:0;color:#94a3b8;font-weight:400;}\n.field input{width:100%;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:#0f172a;outline:none;transition:border-color 0.2s;}\n.field input:focus{border-color:#1d6fa5;background:#ffffff;}\n.field input::placeholder{color:#94a3b8;}\n.field input[type=\"date\"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:0.5;}\n.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}\n.submit-btn{width:100%;background:#1d6fa5;border:none;border-radius:8px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:#fff;cursor:pointer;margin-top:8px;letter-spacing:0.03em;transition:background 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}\n.submit-btn:hover{background:#1a5f8f;}\n.submit-btn:disabled{opacity:0.5;cursor:not-allowed;}\n.divider{border:none;border-top:1px dashed #e2e8f0;margin:16px 0;}\n.error-box{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 16px;color:#b91c1c;font-size:13px;margin-bottom:16px;display:none;}\n.combo{position:relative;}\n.combo input{cursor:text;}\n.combo-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;max-height:200px;overflow-y:auto;z-index:50;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.1);}\n.combo-list.open{display:block;}\n.combo-option{padding:10px 14px;font-size:14px;color:#334155;cursor:pointer;}\n.combo-option:hover,.combo-option.active{background:#1d6fa5;color:#fff;}\n.combo-empty{padding:10px 14px;font-size:13px;color:#94a3b8;}\n.info-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:20px;}\n.board{background:#ffffff;border:1px solid #cbd5e1;border-radius:16px;overflow:hidden;}\n.board-header{background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:16px 24px;display:flex;align-items:center;gap:10px;}\n.board-header-dot{width:8px;height:8px;border-radius:50%;background:#1d6fa5;}\n.board-header-title{font-size:12px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#64748b;}\n.board-body{padding:24px;}\n.steps{display:flex;flex-direction:column;}\n.step{display:flex;gap:16px;padding-bottom:24px;position:relative;}\n.step:last-child{padding-bottom:0;}\n.step:not(:last-child)::before{content:'';position:absolute;left:15px;top:32px;bottom:0;width:1px;background:#e2e8f0;}\n.step-num{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#eff6ff;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#1d6fa5;z-index:1;}\n.step-content{flex:1;padding-top:4px;}\n.step-title{font-size:16px;font-weight:600;color:#0f172a;margin-bottom:4px;}\n.step-desc{font-size:14px;color:#64748b;line-height:1.6;}\n.step-desc em{color:#94a3b8;font-style:normal;}\n.warnings{background:#ffffff;border:1px solid #fed7aa;border-radius:16px;overflow:hidden;}\n.warnings-header{background:#fff7ed;border-bottom:1px solid #fed7aa;padding:14px 24px;display:flex;align-items:center;gap:8px;}\n.warnings-icon{color:#ea580c;font-size:16px;}\n.warnings-title{font-size:12px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#c2410c;}\n.warnings-body{padding:20px 24px;display:flex;flex-direction:column;gap:14px;}\n.warning-row{display:flex;gap:10px;font-size:14px;color:#64748b;line-height:1.6;}\n.warning-bullet{color:#ea580c;flex-shrink:0;font-size:16px;line-height:1.4;}\n.warning-row strong{color:#1e293b;font-weight:600;}\n.footer{border-top:1px solid #e2e8f0;background:#ffffff;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;}\n.footer-text{font-size:11px;color:#94a3b8;letter-spacing:0.06em;}\n.footer-lock{font-size:11px;color:#94a3b8;}\n.success-view{display:none;text-align:center;padding:32px 24px;}\n.success-plane{font-size:48px;margin-bottom:20px;}\n.success-title{font-family:'Playfair Display',serif;font-size:26px;color:#0f172a;margin-bottom:8px;}\n.success-sub{font-size:14px;color:#64748b;line-height:1.6;}\n@media(max-width:960px){\n  .main{flex-direction:column;padding:24px;}\n  .form-col{flex:none;width:100%;}\n  .hero{padding:16px 24px;}\n  .ticker{display:none;}\n  .footer{padding:16px 24px;}\n}\n</style>\n</head>\n<body>\n<div class=\"page\">\n  <div class=\"hero\">\n    <div class=\"hero-left\">\n      <div class=\"hero-plane\">&#9992;</div>\n      <div>\n        <div class=\"hero-title\">Travel Security Portal</div>\n        <div class=\"hero-sub\">Vacation alert suppression system</div>\n      </div>\n    </div>\n    <div class=\"ticker\">\n      <div class=\"ticker-label\">Destinations</div>\n      <div class=\"ticker-track\">\n        <div class=\"ticker-inner\" id=\"tickerInner\"></div>\n      </div>\n    </div>\n  </div>\n\n  <div class=\"main\">\n    <div class=\"form-col\">\n      <div class=\"form-card\">\n        <div class=\"form-card-header\">\n          <div class=\"form-eyebrow\">Suppression request</div>\n          <div class=\"form-heading\">Where are you headed?</div>\n        </div>\n        <div class=\"form-body\">\n          <div id=\"formView\">\n            <div id=\"errorBox\" class=\"error-box\"></div>\n            <div class=\"field\">\n              <label>Full name</label>\n              <input type=\"text\" id=\"userName\" value=\"${escapeHtml(userName)}\" placeholder=\"Your full name\" />\n            </div>\n            <div class=\"field\">\n              <label>Work email</label>\n              <input type=\"text\" id=\"userEmail\" value=\"${escapeHtml(userEmail)}\" placeholder=\"you@company.com\" />\n            </div>\n            <div class=\"divider\"></div>\n            <div class=\"field\">\n              <label>First stop <span class=\"opt\">(optional)</span></label>\n              <div class=\"combo\" data-combo=\"stop1\">\n                <input type=\"text\" class=\"combo-input\" id=\"stop1_input\" placeholder=\"Search destinations...\" autocomplete=\"off\" />\n                <input type=\"hidden\" id=\"stop1\" />\n                <div class=\"combo-list\" id=\"stop1_list\"></div>\n              </div>\n            </div>\n            <div class=\"field\">\n              <label>Second stop <span class=\"opt\">(optional)</span></label>\n              <div class=\"combo\" data-combo=\"stop2\">\n                <input type=\"text\" class=\"combo-input\" id=\"stop2_input\" placeholder=\"Search destinations...\" autocomplete=\"off\" />\n                <input type=\"hidden\" id=\"stop2\" />\n                <div class=\"combo-list\" id=\"stop2_list\"></div>\n              </div>\n            </div>\n            <div class=\"field\">\n              <label>Third stop <span class=\"opt\">(optional)</span></label>\n              <div class=\"combo\" data-combo=\"stop3\">\n                <input type=\"text\" class=\"combo-input\" id=\"stop3_input\" placeholder=\"Search destinations...\" autocomplete=\"off\" />\n                <input type=\"hidden\" id=\"stop3\" />\n                <div class=\"combo-list\" id=\"stop3_list\"></div>\n              </div>\n            </div>\n            <div class=\"field\">\n              <label>Final destination <span class=\"req\">*</span></label>\n              <div class=\"combo\" data-combo=\"finalDestination\">\n                <input type=\"text\" class=\"combo-input\" id=\"finalDestination_input\" placeholder=\"Search destinations...\" autocomplete=\"off\" />\n                <input type=\"hidden\" id=\"finalDestination\" />\n                <div class=\"combo-list\" id=\"finalDestination_list\"></div>\n              </div>\n            </div>\n            <div class=\"divider\"></div>\n            <div class=\"field-row\">\n              <div class=\"field\">\n                <label>Departure <span class=\"req\">*</span></label>\n                <input type=\"date\" id=\"departure\" />\n              </div>\n              <div class=\"field\">\n                <label>Return <span class=\"req\">*</span></label>\n                <input type=\"date\" id=\"returnDate\" />\n              </div>\n            </div>\n            <div class=\"field\">\n              <label>Additional notes</label>\n              <input type=\"text\" id=\"notes\" placeholder=\"Layover airports, hotel vs. cellular data...\" />\n            </div>\n            <button class=\"submit-btn\" id=\"submitBtn\" onclick=\"submitForm()\">\n              <span>&#9992;</span> Submit travel request\n            </button>\n          </div>\n          <div class=\"success-view\" id=\"successView\">\n            <div class=\"success-plane\">&#9992;</div>\n            <div class=\"success-title\">You're cleared for takeoff</div>\n            <p class=\"success-sub\">Your travel suppression has been created in SaaS Alerts. A confirmation email is on its way. Safe travels!</p>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"info-col\">\n      <div class=\"board\">\n        <div class=\"board-header\">\n          <div class=\"board-header-dot\"></div>\n          <div class=\"board-header-title\">How to submit a travel request</div>\n        </div>\n        <div class=\"board-body\">\n          <div class=\"steps\">\n            <div class=\"step\">\n              <div class=\"step-num\">1</div>\n              <div class=\"step-content\">\n                <div class=\"step-title\">Travel itinerary — stops 1–3</div>\n                <div class=\"step-desc\">Have layovers or visiting multiple countries? Search and select them in chronological order. <em>Flying direct? Leave these blank.</em></div>\n              </div>\n            </div>\n            <div class=\"step\">\n              <div class=\"step-num\">2</div>\n              <div class=\"step-content\">\n                <div class=\"step-title\">Final destination (required)</div>\n                <div class=\"step-desc\">Select the primary country where you'll spend the majority of your time. This is required even if you entered optional stops.</div>\n              </div>\n            </div>\n            <div class=\"step\">\n              <div class=\"step-num\">3</div>\n              <div class=\"step-content\">\n                <div class=\"step-title\">Departure and return dates (required)</div>\n                <div class=\"step-desc\">Departure is the day you leave. Return is the day you resume working from your home location — not just when you land.</div>\n              </div>\n            </div>\n            <div class=\"step\">\n              <div class=\"step-num\">4</div>\n              <div class=\"step-content\">\n                <div class=\"step-title\">Additional notes</div>\n                <div class=\"step-desc\">Share any extra context — layover airports, hotel Wi-Fi vs. cellular data, or a flexible return window.</div>\n              </div>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <div class=\"warnings\">\n        <div class=\"warnings-header\">\n          <span class=\"warnings-icon\">&#9888;</span>\n          <span class=\"warnings-title\">Important security reminders</span>\n        </div>\n        <div class=\"warnings-body\">\n          <div class=\"warning-row\">\n            <span class=\"warning-bullet\">&#9679;</span>\n            <span><strong>Submit early.</strong> Submit at least 48 hours before departure to ensure suppressions are processed in time.</span>\n          </div>\n          <div class=\"warning-row\">\n            <span class=\"warning-bullet\">&#9679;</span>\n            <span><strong>MFA is still required.</strong> Suppressing travel alerts handles location-based anomalies only — Multi-Factor Authentication remains enforced. Ensure your authenticator app or hardware token is ready for international use.</span>\n          </div>\n          <div class=\"warning-row\">\n            <span class=\"warning-bullet\">&#9679;</span>\n            <span><strong>Plans changed?</strong> If your trip is extended, cut short, or destinations change, notify IT immediately so your security window can be adjusted.</span>\n          </div>\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <div class=\"footer\">\n    <span class=\"footer-text\">Travel Security Portal &mdash; Powered by SaaS Alerts</span>\n    <span class=\"footer-lock\">&#128274; Secured by your IT team</span>\n  </div>\n</div>\n\n<script>\nconst token = ${JSON.stringify(token)};\nconst countries = ${JSON.stringify(countries)};\n\nconst destinations = [\"Paris, France\",\"Tokyo, Japan\",\"Rome, Italy\",\"Barcelona, Spain\",\"London, UK\",\"Sydney, Australia\",\"Dubai, UAE\",\"New York, USA\",\"Singapore\",\"Amsterdam, Netherlands\",\"Bangkok, Thailand\",\"Prague, Czech Republic\",\"Lisbon, Portugal\",\"Vienna, Austria\",\"Bali, Indonesia\",\"Cape Town, South Africa\",\"Toronto, Canada\",\"Mexico City, Mexico\",\"Buenos Aires, Argentina\",\"Istanbul, Turkey\"];\nconst tickerInner = document.getElementById('tickerInner');\nconst doubled = [...destinations, ...destinations];\ntickerInner.innerHTML = doubled.map(d => '<span class=\"ticker-item\">&#9992; <span>' + d + '</span></span>').join('');\n\ndocument.querySelectorAll('.combo').forEach(function(combo) {\n  const name = combo.getAttribute('data-combo');\n  const input = document.getElementById(name + '_input');\n  const hidden = document.getElementById(name);\n  const list = document.getElementById(name + '_list');\n  let activeIndex = -1;\n  let filtered = [];\n\n  function renderList(items) {\n    filtered = items;\n    activeIndex = -1;\n    list.innerHTML = items.length === 0\n      ? '<div class=\"combo-empty\">No destinations found</div>'\n      : items.map((c,i) => '<div class=\"combo-option\" data-index=\"' + i + '\">' + c + '</div>').join('');\n  }\n\n  function openList() { list.classList.add('open'); }\n  function closeList() { list.classList.remove('open'); }\n\n  input.addEventListener('focus', function() { renderList(countries); openList(); });\n  input.addEventListener('input', function() {\n    hidden.value = '';\n    const q = input.value.toLowerCase();\n    renderList(countries.filter(c => c.toLowerCase().indexOf(q) !== -1));\n    openList();\n  });\n  input.addEventListener('keydown', function(e) {\n    const opts = list.querySelectorAll('.combo-option');\n    if (e.key === 'ArrowDown') { e.preventDefault(); activeIndex = Math.min(activeIndex+1, opts.length-1); updateActive(opts); }\n    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndex = Math.max(activeIndex-1, 0); updateActive(opts); }\n    else if (e.key === 'Enter') { e.preventDefault(); if (activeIndex >= 0 && filtered[activeIndex]) selectValue(filtered[activeIndex]); }\n    else if (e.key === 'Escape') closeList();\n  });\n  function updateActive(opts) {\n    opts.forEach((o,i) => o.classList.toggle('active', i === activeIndex));\n    if (opts[activeIndex]) opts[activeIndex].scrollIntoView({ block: 'nearest' });\n  }\n  function selectValue(val) { input.value = val; hidden.value = val; closeList(); }\n  list.addEventListener('mousedown', function(e) {\n    const opt = e.target.closest('.combo-option');\n    if (opt) selectValue(filtered[parseInt(opt.getAttribute('data-index'), 10)]);\n  });\n  document.addEventListener('click', function(e) { if (!combo.contains(e.target)) closeList(); });\n});\n\nfunction showError(msg) {\n  const el = document.getElementById('errorBox');\n  el.textContent = msg;\n  el.style.display = 'block';\n}\nfunction clearError() { document.getElementById('errorBox').style.display = 'none'; }\n\nasync function submitForm() {\n  clearError();\n  const comboFields = ['stop1','stop2','stop3','finalDestination'];\n  for (const f of comboFields) {\n    const v = document.getElementById(f + '_input');\n    const h = document.getElementById(f);\n    if (v.value && v.value !== h.value) { h.value = ''; v.style.borderColor = '#fca5a5'; }\n  }\n  for (const f of ['stop1','stop2','stop3']) {\n    const v = document.getElementById(f + '_input');\n    const h = document.getElementById(f);\n    if (v.value.trim() !== '' && h.value === '') {\n      showError('Please select a valid destination from the dropdown for all filled stops, or clear the field.');\n      return;\n    }\n  }\n  const userName = document.getElementById('userName').value.trim();\n  const userEmail = document.getElementById('userEmail').value.trim();\n  const stop1 = document.getElementById('stop1').value;\n  const stop2 = document.getElementById('stop2').value;\n  const stop3 = document.getElementById('stop3').value;\n  const finalDestination = document.getElementById('finalDestination').value;\n  const departure = document.getElementById('departure').value;\n  const returnDate = document.getElementById('returnDate').value;\n  const notes = document.getElementById('notes').value.trim();\n  if (!userEmail) { showError('Please enter your work email.'); return; }\n  if (!finalDestination || !departure || !returnDate) { showError('Please fill in all required fields and select a destination from the dropdown.'); return; }\n  const today = new Date().toISOString().split('T')[0];\n  if (departure < today) { showError('Departure date cannot be in the past.'); return; }\n  if (returnDate < departure) { showError('Return date cannot be before your departure date.'); return; }\n  const payload = {\n    \"First and Last Name\": userName,\n    \"Work Email\": userEmail,\n    \"First Stop (optional)\": stop1,\n    \"Second Stop (optional)\": stop2,\n    \"Third Stop (optional)\": stop3,\n    \"Final Destination\": finalDestination,\n    \"Departure Date\": departure,\n    \"Return Date\": returnDate,\n    \"Additional Notes\": notes,\n    \"submittedAt\": new Date().toISOString(),\n    \"formMode\": \"production\",\n    \"formQueryParameters\": { \"token\": token }\n  };\n  const btn = document.getElementById('submitBtn');\n  btn.disabled = true;\n  btn.innerHTML = '<span>&#8987;</span> Submitting...';\n  try {\n    const response = await fetch(window.location.pathname.replace('/landing','/submit'), {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify(payload)\n    });\n    const result = await response.json();\n    if (result.success) {\n      document.getElementById('formView').style.display = 'none';\n      document.getElementById('successView').style.display = 'block';\n    } else {\n      showError(result.message || 'Something went wrong. Please try again.');\n      btn.disabled = false;\n      btn.innerHTML = '<span>&#9992;</span> Submit travel request';\n    }\n  } catch(e) {\n    showError('Submission failed. Please contact your MSP for assistance.');\n    btn.disabled = false;\n    btn.innerHTML = '<span>&#9992;</span> Submit travel request';\n  }\n}\n</script>\n</body>\n</html>`;\n\nreturn [{ json: { html } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        -336
+      ],
+      "id": "b292c61b-fb50-4cef-b3c6-953d8b7e57ef",
+      "name": "Website Look"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Partner Variables": {
+      "main": [
+        [
+          {
+            "node": "Map & Validate Form Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map & Validate Form Data": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "POST Create Suppression": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Customer List": {
+      "main": [
+        [
+          {
+            "node": "Find Org by Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Org by Email": {
+      "main": [
+        [
+          {
+            "node": "Prepare Suppression Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "GET Customer List",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET Customer List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auth Entry": {
+      "main": [
+        [
+          {
+            "node": "Build MS Auth URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build MS Auth URL": {
+      "main": [
+        [
+          {
+            "node": "Respond – redirect to MS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP – exchange code": {
+      "main": [
+        [
+          {
+            "node": "HTTP – MS Graph profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP – MS Graph profile": {
+      "main": [
+        [
+          {
+            "node": "Validate User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Confirmation Email": {
+      "main": [
+        [
+          {
+            "node": "Gmail SMTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Build Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail SMTP": {
+      "main": [
+        []
+      ]
+    },
+    "OAuth Callback": {
+      "main": [
+        [
+          {
+            "node": "HTTP – exchange code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate User": {
+      "main": [
+        [
+          {
+            "node": "Generate Session Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Session Token": {
+      "main": [
+        [
+          {
+            "node": "Respond – redirect to form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Partner Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Landing Page": {
+      "main": [
+        [
+          {
+            "node": "Website Look",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Suppression Items": {
+      "main": [
+        [
+          {
+            "node": "POST Create Suppression",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website Look": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6d5a9370-f64c-49cd-9aa4-794d8953b7b1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c3bda8b31d1e04418e1c2bb9e687fe6b2563b67d165c1ef431cd3ef99292ed77"
+  },
+  "nodeGroups": [],
+  "id": "vpjqbKThdm70dAxt",
+  "tags": []
+}
